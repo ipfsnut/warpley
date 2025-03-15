@@ -6,9 +6,9 @@ exports.handler = async function(event, context) {
   // Parse query parameters
   const params = event.queryStringParameters || {};
   const channelId = params.channelId; // Required parameter
-  const followerLimit = Math.min(parseInt(params.followerLimit || 50), 100); // Followers to fetch
-  const castLimit = Math.min(parseInt(params.castLimit || 10), 50); // Casts per follower
-  const totalCastLimit = Math.min(parseInt(params.totalCastLimit || 100), 500); // Total casts to return
+  const followerLimit = parseInt(params.followerLimit || 100); // Default to 100, no artificial max
+  const castLimit = parseInt(params.castLimit || 10); // Casts per follower
+  const totalCastLimit = parseInt(params.totalCastLimit || 100); // Total casts to return
   
   // Validate required parameters
   if (!channelId) {
@@ -74,11 +74,12 @@ exports.handler = async function(event, context) {
               name: channel.name,
               followerCount: channel.followerCount
             },
-            followers: 0,
+            followersCount: 0,
             totalCastsCollected: 0,
             timestamp: new Date().toISOString(),
             message: "No followers found for this channel"
           },
+          followers: [],
           casts: []
         })
       };
@@ -129,7 +130,18 @@ exports.handler = async function(event, context) {
     
     console.log(`Fetched ${allCasts.length} casts in total`);
     
-    // If no casts found, return early with an informative message
+    // Format the followers data for the response
+    const formattedFollowers = followers.map(follower => ({
+      fid: follower.fid,
+      username: follower.username,
+      displayName: follower.displayName,
+      pfp: follower.pfp?.url,
+      bio: follower.profile?.bio?.text,
+      followerCount: follower.followerCount,
+      followingCount: follower.followingCount
+    }));
+    
+    // If no casts found, return early with followers but empty casts
     if (allCasts.length === 0) {
       return {
         statusCode: 200,
@@ -144,11 +156,12 @@ exports.handler = async function(event, context) {
               name: channel.name,
               followerCount: channel.followerCount
             },
-            followers: followers.length,
+            followersCount: followers.length,
             totalCastsCollected: 0,
             timestamp: new Date().toISOString(),
             message: "No casts found from the followers"
           },
+          followers: formattedFollowers,
           casts: []
         })
       };
@@ -209,10 +222,11 @@ exports.handler = async function(event, context) {
             name: channel.name,
             followerCount: channel.followerCount
           },
-          followers: followers.length,
+          followersCount: followers.length,
           totalCastsCollected: allCasts.length,
           timestamp: new Date().toISOString()
         },
+        followers: formattedFollowers,
         casts: formattedCasts
       })
     };

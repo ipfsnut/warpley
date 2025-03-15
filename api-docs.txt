@@ -12,9 +12,6 @@ https://warpley.netlify.app/.netlify/functions/warpcast-api
 Endpoints
 ---------
 
-## Follower Feed
-
-Get recent casts from followers of a specific channel, sorted by engagement.
 1. Channel Information
 ---------------------
 Retrieve details about a specific Farcaster channel.
@@ -134,7 +131,70 @@ Response:
         "fid": 1234
       },
       "text": "This is the cast content",
-      "content": "This is the cast content",
+      "timestamp": 1678889696,
+      "engagement": {
+        "likes": 123,
+        "recasts": 45,
+        "replies": 67,
+        "total": 235
+      },
+      "embeds": []
+    },
+    // More casts...
+  ]
+}
+
+5. Follower Feed
+---------------
+Get followers and recent casts from followers of a specific channel, sorted by engagement.
+
+Request:
+GET /.netlify/functions/warpcast-api?followerFeed=true&channelId={CHANNEL_ID}&followerLimit={FOLLOWER_LIMIT}&castLimit={CAST_LIMIT}&totalCastLimit={TOTAL_CAST_LIMIT}
+
+Parameters:
+followerFeed (Required) - Set to 'true' to fetch follower feed
+channelId (Required) - ID of the channel to fetch followers from (e.g., memes, page, wake)
+followerLimit (Optional) - Number of followers to fetch (Default: 100)
+castLimit (Optional) - Number of casts per follower to fetch (Default: 10)
+totalCastLimit (Optional) - Total number of casts to return (Default: 100)
+
+Example Request:
+GET /.netlify/functions/warpcast-api?followerFeed=true&channelId=memes&followerLimit=50&totalCastLimit=100
+
+Response:
+{
+  "meta": {
+    "channel": {
+      "id": "memes",
+      "name": "memes",
+      "followerCount": 12345
+    },
+    "followersCount": 50,
+    "totalCastsCollected": 100,
+    "timestamp": "2023-03-15T12:34:56Z"
+  },
+  "followers": [
+    {
+      "fid": 1234,
+      "username": "user123",
+      "displayName": "User Name",
+      "pfp": "https://example.com/profile.jpg",
+      "bio": "User bio text",
+      "followerCount": 500,
+      "followingCount": 300
+    },
+    // More followers...
+  ],
+  "casts": [
+    {
+      "id": "0x1234...",
+      "author": {
+        "username": "user123",
+        "displayName": "User Name",
+        "profileImage": "https://example.com/profile.jpg",
+        "fid": 1234
+      },
+      "text": "This is the cast content",
       "timestamp": 1678889696,
       "engagement": {
         "likes": 123,
@@ -152,7 +212,6 @@ Rate Limits and Constraints
 --------------------------
 - The API is subject to Warpcast's underlying rate limits
 - Maximum channels per request: 100
-- Maximum followers per channel: 50
 - Maximum casts per follower: 20
 - Maximum total casts in comprehensive feed: 500
 - Requests that exceed these limits will be automatically capped
@@ -180,21 +239,21 @@ Example Usage
 ------------
 
 cURL:
-curl "https://warpley.netlify.app/.netlify/functions/warpcast-api?comprehensiveFeed=true&channelLimit=5&totalCastLimit=10"
+curl "https://warpley.netlify.app/.netlify/functions/warpcast-api?followerFeed=true&channelId=memes&followerLimit=20"
 
 JavaScript:
-async function getFarcasterTrends(limit = 5) {
-  const response = await fetch('https://warpley.netlify.app/.netlify/functions/warpcast-api?comprehensiveFeed=true&totalCastLimit=' + limit);
+async function getChannelFollowers(channelId, limit = 50) {
+  const response = await fetch(`https://warpley.netlify.app/.netlify/functions/warpcast-api?followerFeed=true&channelId=${channelId}&followerLimit=${limit}`);
   const data = await response.json();
   
-  if (data.casts && data.casts.length > 0) {
-    return data.casts.map(cast => ({
-      author: `@${cast.author.username}`,
-      content: cast.text || cast.content,
-      engagement: cast.engagement.total
-    }));
+  if (data.followers && data.followers.length > 0) {
+    return {
+      channel: data.meta.channel,
+      followers: data.followers,
+      topCasts: data.casts
+    };
   } else {
-    return "No trending content found at the moment.";
+    return "No followers found for this channel.";
   }
 }
 
@@ -202,4 +261,4 @@ Notes
 -----
 - The Warpcast API is subject to change. If you encounter issues, check for updates to this documentation.
 - For high-volume applications, consider implementing your own caching layer.
-- The comprehensive feed algorithm prioritizes engagement metrics (likes + recasts) to surface trending content.
+- The follower feed and comprehensive feed algorithms prioritize engagement metrics (likes + recasts) to surface trending content.
