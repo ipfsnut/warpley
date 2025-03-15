@@ -343,7 +343,45 @@
     </div>
   </div>
 </div>
-
+<div class="card mb-4">
+  <div class="card-header">
+    <h5>Follower Feed</h5>
+  </div>
+  <div class="card-body">
+    <p>Get followers and recent casts from a specific channel, sorted by engagement.</p>
+    
+    <form id="followerFeedForm">
+      <div class="mb-3">
+        <label for="followerFeedChannelId" class="form-label">Channel ID</label>
+        <input type="text" class="form-control" id="followerFeedChannelId" placeholder="e.g., memes, page, wake" required>
+      </div>
+      
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <label for="followerLimit" class="form-label">Follower Limit</label>
+          <input type="number" class="form-control" id="followerLimit" min="1" value="50">
+        </div>
+        <div class="col-md-4 mb-3">
+          <label for="followerCastLimit" class="form-label">Casts per Follower</label>
+          <input type="number" class="form-control" id="followerCastLimit" min="1" max="50" value="10">
+        </div>
+        <div class="col-md-4 mb-3">
+          <label for="followerTotalCastLimit" class="form-label">Total Casts</label>
+          <input type="number" class="form-control" id="followerTotalCastLimit" min="1" max="500" value="100">
+        </div>
+      </div>
+      
+      <button type="submit" class="btn btn-primary">Get Follower Feed</button>
+    </form>
+    
+    <div id="followerFeedResult" class="mt-4" style="display: none;">
+      <h6>Results:</h6>
+      <div class="result-container">
+        <pre id="followerFeedOutput" class="result-pre"></pre>
+      </div>
+    </div>
+  </div>
+</div>
 
     <script>
         // Tab switching
@@ -504,7 +542,7 @@ document.getElementById('followerFeedForm').addEventListener('submit', async fun
   resultContainer.style.display = 'block';
   
   try {
-    const url = `/.netlify/functions/warpcast-api?followerFeed=true&channelId=${encodeURIComponent(channelId)}&followerLimit=${followerLimit}&castLimit=${castLimit}&totalCastLimit=${totalCastLimit}`;
+    const url = `/.netlify/functions/follower-feed?channelId=${encodeURIComponent(channelId)}&followerLimit=${followerLimit}&castLimit=${castLimit}&totalCastLimit=${totalCastLimit}`;
     
     const response = await fetch(url);
     const data = await response.json();
@@ -514,7 +552,5 @@ document.getElementById('followerFeedForm').addEventListener('submit', async fun
     outputElement.textContent = `Error: ${error.message}`;
   }
 });
-
     </script>
-</body>
-</html>
+</body></html>
