@@ -27,6 +27,7 @@ exports.handler = async function(event, context) {
       .slice(0, channelLimit);
     
     console.log(`Processing top ${channels.length} channels by follower count`);
+    
     // Step 2: Get followers for each channel
     console.log('Fetching followers for each channel...');
     
@@ -99,14 +100,40 @@ exports.handler = async function(event, context) {
       .sort((a, b) => b.engagement - a.engagement)
       .slice(0, totalCastLimit);
     
+    // Step 5: Format the data for API consumption
+    const formattedCasts = allCasts.map(cast => ({
+      id: cast.hash,
+      author: {
+        username: cast.author?.username,
+        displayName: cast.author?.displayName,
+        profileImage: cast.author?.pfp?.url,
+        fid: cast.author?.fid
+      },
+      content: cast.text,
+      timestamp: cast.timestamp,
+      engagement: {
+        likes: cast.reactions?.count || 0,
+        recasts: cast.recasts?.count || 0,
+        replies: cast.replies?.count || 0,
+        total: cast.engagement
+      },
+      embeds: cast.embeds || []
+    }));
+    
     return {
       statusCode: 200,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*" // Allow cross-origin requests
+      },
       body: JSON.stringify({
-        channels: channels.length,
-        uniqueFollowers: followerFids.length,
-        totalCastsCollected: allCasts.length,
-        casts: allCasts,
-        timestamp: new Date().toISOString()
+        meta: {
+          channels: channels.length,
+          uniqueFollowers: followerFids.length,
+          totalCastsCollected: allCasts.length,
+          timestamp: new Date().toISOString()
+        },
+        casts: formattedCasts
       })
     };
   } catch (error) {
@@ -114,6 +141,10 @@ exports.handler = async function(event, context) {
     
     return {
       statusCode: 500,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*"
+      },
       body: JSON.stringify({
         error: 'Failed to generate comprehensive feed',
         message: error.message

@@ -16,6 +16,24 @@ exports.handler = async function(event, context) {
     } else if (params.username) {
       // Get user address info
       return await getUserAddress(params.username, params.tokenAddress);
+    } else if (params.comprehensiveFeed === 'true') {
+      // Forward to the comprehensive feed function
+      // We'll use the fetch API to call our own function
+      const url = new URL(`${process.env.URL || event.headers.host}/.netlify/functions/comprehensive-feed`);
+      
+      // Forward all relevant parameters
+      if (params.channelLimit) url.searchParams.append('channelLimit', params.channelLimit);
+      if (params.followerLimit) url.searchParams.append('followerLimit', params.followerLimit);
+      if (params.castLimit) url.searchParams.append('castLimit', params.castLimit);
+      if (params.totalCastLimit) url.searchParams.append('totalCastLimit', params.totalCastLimit);
+      
+      const response = await fetch(url.toString());
+      const data = await response.json();
+      
+      return {
+        statusCode: response.status,
+        body: JSON.stringify(data)
+      };
     } else {
       // Default response with available endpoints
       return {
@@ -24,7 +42,14 @@ exports.handler = async function(event, context) {
           available_endpoints: {
             "allChannels": "Get all channels with ?allChannels=true",
             "channelId": "Get specific channel with ?channelId=CHANNEL_ID",
-            "username": "Get user address with ?username=USERNAME and optional &tokenAddress=TOKEN_ADDRESS"
+            "username": "Get user address with ?username=USERNAME and optional &tokenAddress=TOKEN_ADDRESS",
+            "comprehensiveFeed": "Get trending content with ?comprehensiveFeed=true and optional parameters"
+          },
+          comprehensive_feed_params: {
+            "channelLimit": "Number of top channels to analyze (default: 20, max: 50)",
+            "followerLimit": "Number of followers per channel (default: 10, max: 50)",
+            "castLimit": "Number of casts per follower (default: 5, max: 20)",
+            "totalCastLimit": "Total casts to return (default: 100, max: 500)"
           },
           timestamp: new Date().toISOString()
         })
