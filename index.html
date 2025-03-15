@@ -1,447 +1,140 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Warpley</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f9f9f9;
-        }
-        h1, h2, h3 {
-            color: #1a1a1a;
-        }
-        .container {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-        .card {
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        .tabs {
-            display: flex;
-            border-bottom: 1px solid #ddd;
-            margin-bottom: 20px;
-        }
-        .tab {
-            padding: 10px 20px;
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-        }
-        .tab.active {
-            border-bottom: 2px solid #7b5ff5;
-            font-weight: 600;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
-        }
-        input, button {
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
-            width: 100%;
-            box-sizing: border-box;
-        }
-        button {
-            background-color: #7b5ff5;
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-weight: 600;
-            margin-top: 10px;
-        }
-        button:hover {
-            background-color: #6344e2;
-        }
-        pre {
-            background-color: #f5f5f5;
-            padding: 15px;
-            border-radius: 4px;
-            overflow-x: auto;
-        }
-        .result {
-            margin-top: 20px;
-        }
-        .loading {
-            text-align: center;
-            padding: 20px;
-        }
-        .tab-content {
-            display: none;
-        }
-        .tab-content.active {
-            display: block;
-        }
-        .cast {
-            margin-bottom: 15px;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            background-color: white;
-        }
-        .cast-header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        .cast-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            margin-right: 10px;
-        }
-        .cast-username {
-            font-weight: bold;
-        }
-        .cast-text {
-            margin-bottom: 10px;
-        }
-        .cast-stats {
-            color: #666;
-            font-size: 0.9em;
-        }
-    </style>
-</head>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Warpley</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f9f9f9;
-        }
-        h1, h2, h3 {
-            color: #1a1a1a;
-        }
-        .container {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-        .card {
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        .tabs {
-            display: flex;
-            border-bottom: 1px solid #ddd;
-            margin-bottom: 20px;
-        }
-        .tab {
-            padding: 10px 20px;
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-        }
-        .tab.active {
-            border-bottom: 2px solid #7b5ff5;
-            font-weight: 600;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
-        }
-        input, button {
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
-            width: 100%;
-            box-sizing: border-box;
-        }
-        button {
-            background-color: #7b5ff5;
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-weight: 600;
-            margin-top: 10px;
-        }
-        button:hover {
-            background-color: #6344e2;
-        }
-        pre {
-            background-color: #f5f5f5;
-            padding: 15px;
-            border-radius: 4px;
-            overflow-x: auto;
-        }
-        .result {
-            margin-top: 20px;
-        }
-        .loading {
-            text-align: center;
-            padding: 20px;
-        }
-        .tab-content {
-            display: none;
-        }
-        .tab-content.active {
-            display: block;
-        }
-        .api-docs-link {
-            display: block;
-            margin-top: 20px;
-            text-align: center;
-            font-weight: 600;
-            color: #7b5ff5;
-            text-decoration: none;
-        }
-        .api-docs-link:hover {
-            text-decoration: underline;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Warpley</title>
+<link rel="stylesheet" href="css/styles.css">
+
+
 </head>
 <body>
-    <div class="container">
-        <div class="card">
-            <h1>Warpley</h1>
-            <p>Test the Warpcast API integration for your AI chatbot</p>
-            
-            <!-- Add API Documentation Link Here -->
-            <a href="/api-docs.txt" class="api-docs-link" target="_blank">View API Documentation</a>
+<div class="container">
+  <div class="card">
+    <h1>Warpley</h1>
+    <p>Test the Warpcast API integration for your AI chatbot</p>
+    <!-- Add API Documentation Link Here -->
+    <a href="/api-docs.txt" class="api-docs-link" target="_blank">View API Documentation</a>
 
-            <div class="tabs">
-                <div class="tab active" data-tab="channel">Channel Info</div>
-                <div class="tab" data-tab="address">User Address</div>
-                <div class="tab" data-tab="all-channels">All Channels</div>
-                <div class="tab" data-tab="comprehensive-feed">Comprehensive Feed</div>
-            </div>
-            <div class="tab-content active" id="channel-tab">
-                <h2>Get Channel Information</h2>
-                <div class="form-group">
-                    <label for="channelId">Channel ID</label>
-                    <input type="text" id="channelId" placeholder="e.g. page, memes, wake">
-                </div>
-                <button id="fetchChannelBtn">Fetch Channel</button>
-                <div class="result" id="channelResult"></div>
-            </div>
-
-            <div class="tab-content" id="address-tab">
-                <h2>Get User's Ethereum Address</h2>
-                <div class="form-group">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" placeholder="e.g. vitalik, dwr">
-                </div>
-                <div class="form-group">
-                    <label for="tokenAddress">Token Address (optional)</label>
-                    <input type="text" id="tokenAddress" placeholder="0x...">
-                </div>
-                <button id="fetchAddressBtn">Fetch Address</button>
-                <div class="result" id="addressResult"></div>
-            </div>
-
-            <div class="tab-content" id="all-channels-tab">
-                <h2>Get All Channels</h2>
-                <div class="form-group">
-                    <label for="limit">Limit</label>
-                    <input type="number" id="limit" value="10" min="1" max="100">
-                </div>
-                <button id="fetchAllChannelsBtn">Fetch All Channels</button>
-                <div class="result" id="allChannelsResult"></div>
-            </div>
-
-            <div class="tab-content" id="comprehensive-tab">
-                <h2>Comprehensive Feed</h2>
-                <p>Get trending content from top channels and their followers</p>
-                
-                <div class="form-group">
-                    <label for="channelLimit">Top Channels</label>
-                    <input type="number" id="channelLimit" value="10" min="1" max="50" placeholder="Number of top channels to analyze">
-                </div>
-                
-                <div class="form-group">
-                    <label for="followerLimit">Followers per Channel</label>
-                    <input type="number" id="followerLimit" value="10" min="1" max="50" placeholder="Number of followers to analyze per channel">
-                </div>
-                
-                <div class="form-group">
-                    <label for="castLimit">Casts per Follower</label>
-                    <input type="number" id="castLimit" value="5" min="1" max="20" placeholder="Number of recent casts to fetch per follower">
-                </div>
-                
-                <div class="form-group">
-                    <label for="totalCastLimit">Total Casts Limit</label>
-                    <input type="number" id="totalCastLimit" value="100" min="1" max="500" placeholder="Maximum number of casts to return">
-                </div>
-                
-                <button id="fetchComprehensiveBtn">Fetch Comprehensive Feed</button>
-                <div class="result" id="comprehensiveResult"></div>
-            </div>
-        </div>
+    <div class="tabs">
+      <div class="tab active" data-tab="channel">Channel Info</div>
+      <div class="tab" data-tab="address">User Address</div>
+      <div class="tab" data-tab="all-channels">All Channels</div>
+      <div class="tab" data-tab="comprehensive-feed">Comprehensive Feed</div>
+      <div class="tab" data-tab="cast-replies">Cast Replies</div>
+      <div class="tab" data-tab="cast-mentions">Cast Mentions</div>
     </div>
 
-    <script>
-        // Tab switching
-        document.querySelectorAll('.tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                // Remove active class from all tabs
-                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                
-                // Add active class to clicked tab
-                tab.classList.add('active');
-                document.getElementById(`${tab.dataset.tab}-tab`).classList.add('active');
-            });
-        });
+    <div class="tab-content active" id="channel-tab">
+      <h2>Get Channel Information</h2>
+      <div class="form-group">
+        <label for="channelId">Channel ID</label>
+        <input type="text" id="channelId" placeholder="e.g. page, memes, wake">
+      </div>
+      <button id="fetchChannelBtn">Fetch Channel</button>
+      <div class="result" id="channelResult"></div>
+    </div>
 
-        // API base URL - will use the current domain
-        const apiBaseUrl = `${window.location.origin}/.netlify/functions/warpcast-api`;
+    <div class="tab-content" id="address-tab">
+      <h2>Get User's Ethereum Address</h2>
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" id="username" placeholder="e.g. vitalik, dwr">
+      </div>
+      <div class="form-group">
+        <label for="tokenAddress">Token Address (optional)</label>
+        <input type="text" id="tokenAddress" placeholder="0x...">
+      </div>
+      <button id="fetchAddressBtn">Fetch Address</button>
+      <div class="result" id="addressResult"></div>
+    </div>
 
-        // Fetch channel info
-        document.getElementById('fetchChannelBtn').addEventListener('click', async () => {
-            const channelId = document.getElementById('channelId').value.trim();
-            if (!channelId) {
-                alert('Please enter a channel ID');
-                return;
-            }
+    <div class="tab-content" id="all-channels-tab">
+      <h2>Get All Channels</h2>
+      <div class="form-group">
+        <label for="limit">Limit</label>
+        <input type="number" id="limit" value="10" min="1" max="100">
+      </div>
+      <button id="fetchAllChannelsBtn">Fetch All Channels</button>
+      <div class="result" id="allChannelsResult"></div>
+    </div>
 
-            const resultElem = document.getElementById('channelResult');
-            resultElem.innerHTML = '<div class="loading">Loading...</div>';
+    <div class="tab-content" id="comprehensive-feed-tab">
+      <h2>Comprehensive Feed</h2>
+      <p>Get trending content from top channels and their followers</p>
+      <div class="form-group">
+        <label for="channelLimit">Channel Limit</label>
+        <input type="number" id="channelLimit" value="20" min="1" max="50">
+      </div>
+      <div class="form-group">
+        <label for="totalCastLimit">Total Cast Limit</label>
+        <input type="number" id="totalCastLimit" value="100" min="1" max="500">
+      </div>
+      <!-- New UI elements for replies -->
+      <div class="form-check">
+        <input type="checkbox" id="includeReplies">
+        <label for="includeReplies">Include Replies</label>
+      </div>
+      <div id="repliesOptionsContainer" style="display: none; margin-top: 10px; padding-left: 20px;">
+        <div class="form-group">
+          <label for="repliesPerCast">Replies Per Cast</label>
+          <input type="number" id="repliesPerCast" value="3" min="1" max="10">
+        </div>
+        <div style="margin-bottom: 10px;">
+          <label>Reply Sort Order</label>
+          <div class="form-check">
+            <input type="radio" name="replySortBy" id="sortByEngagement" value="engagement" checked>
+            <label for="sortByEngagement">Most Engaging</label>
+          </div>
+          <div class="form-check">
+            <input type="radio" name="replySortBy" id="sortByRecent" value="recent">
+            <label for="sortByRecent">Most Recent</label>
+          </div>
+        </div>
+      </div>
+      <button id="fetchComprehensiveBtn">Generate Feed</button>
+      <div class="result" id="comprehensiveResult"></div>
+    </div>
 
-            try {
-                const response = await fetch(`${apiBaseUrl}?channelId=${encodeURIComponent(channelId)}`);
-                const data = await response.json();
-                
-                resultElem.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
-            } catch (error) {
-                resultElem.innerHTML = `<div class="error">Error: ${error.message}</div>`;
-            }
-        });
+    <div class="tab-content" id="cast-replies-tab">
+      <h2>Cast Replies</h2>
+      <p>Get replies to a specific cast</p>
+      <div class="form-group">
+        <label for="parentFid">Parent FID</label>
+        <input type="text" id="parentFid" placeholder="Enter parent cast FID">
+      </div>
+      <div class="form-group">
+        <label for="parentHash">Parent Hash</label>
+        <input type="text" id="parentHash" placeholder="Enter parent cast hash">
+      </div>
+      <div class="form-group">
+        <label for="castUrl">OR Cast URL</label>
+        <input type="text" id="castUrl" placeholder="Enter cast URL">
+      </div>
+      <div class="form-group">
+        <label for="replyLimit">Limit</label>
+        <input type="number" id="replyLimit" value="20" min="1" max="100">
+      </div>
+      <button id="fetchRepliesBtn">Get Replies</button>
+      <div class="result" id="repliesResult"></div>
+    </div>
 
-        // Fetch user address
-        document.getElementById('fetchAddressBtn').addEventListener('click', async () => {
-            const username = document.getElementById('username').value.trim();
-            const tokenAddress = document.getElementById('tokenAddress').value.trim();
-            
-            if (!username) {
-                alert('Please enter a username');
-                return;
-            }
-
-            const resultElem = document.getElementById('addressResult');
-            resultElem.innerHTML = '<div class="loading">Loading...</div>';
-
-            try {
-                let url = `${apiBaseUrl}?username=${encodeURIComponent(username)}`;
-                if (tokenAddress) {
-                    url += `&tokenAddress=${encodeURIComponent(tokenAddress)}`;
-                }
-                
-                const response = await fetch(url);
-                const data = await response.json();
-                
-                resultElem.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
-            } catch (error) {
-                resultElem.innerHTML = `<div class="error">Error: ${error.message}</div>`;
-            }
-        });
-
-        // Fetch all channels
-        document.getElementById('fetchAllChannelsBtn').addEventListener('click', async () => {
-            const limit = document.getElementById('limit').value;
-
-            const resultElem = document.getElementById('allChannelsResult');
-            resultElem.innerHTML = '<div class="loading">Loading...</div>';
-
-            try {
-                const response = await fetch(`${apiBaseUrl}?allChannels=true&limit=${limit}`);
-                const data = await response.json();
-                
-                resultElem.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
-            } catch (error) {
-                resultElem.innerHTML = `<div class="error">Error: ${error.message}</div>`;
-            }
-        });
-
-        // Fetch comprehensive feed
-        document.getElementById('fetchComprehensiveBtn').addEventListener('click', async () => {
-            const channelLimit = document.getElementById('channelLimit').value;
-            const followerLimit = document.getElementById('followerLimit').value;
-            const castLimit = document.getElementById('castLimit').value;
-            const totalCastLimit = document.getElementById('totalCastLimit').value;
-            
-            const resultElem = document.getElementById('comprehensiveResult');
-            resultElem.innerHTML = '<div class="loading">Loading trending content...</div>';
-            
-            try {
-                const response = await fetch(`/.netlify/functions/comprehensive-feed?channelLimit=${channelLimit}&followerLimit=${followerLimit}&castLimit=${castLimit}&totalCastLimit=${totalCastLimit}`);
-                
-                if (!response.ok) {
-                    throw new Error(`API returned ${response.status}: ${response.statusText}`);
-                }
-                
-                const data = await response.json();
-                
-                // Display stats
-                let html = `
-                    <h3>Results</h3>
-                    <p>Analyzed ${data.channels} channels with ${data.uniqueFollowers} unique followers.</p>
-                    <p>Found ${data.totalCastsCollected} trending casts.</p>
-                `;
-                
-                // Display casts in a formatted way
-                if (data.casts && data.casts.length > 0) {
-                    html += `<h3>Top Trending Casts</h3>`;
-                    
-                    data.casts.forEach(cast => {
-                        html += `
-                            <div class="cast">
-                                <div class="cast-header">
-                                    <img class="cast-avatar" src="${cast.author?.pfp?.url || 'https://via.placeholder.com/40'}" alt="Avatar">
-                                    <div>
-                                        <div class="cast-username">${cast.author?.username || 'Unknown User'}</div>
-                                        <div>${cast.author?.displayName || ''}</div>
-                                    </div>
-                                </div>
-                                <div class="cast-text">${cast.text}</div>
-                                <div class="cast-stats">
-                                    ❤️ ${cast.reactions?.count || 0} • 
-                                    🔄 ${cast.recasts?.count || 0} • 
-                                    💬 ${cast.replies?.count || 0} •
-                                    Engagement Score: ${cast.engagement || 0}
-                                </div>
-                            </div>
-                        `;
-                    });
-                } else {
-                    html += `<p>No casts found.</p>`;
-                }
-                
-                resultElem.innerHTML = html;
-            } catch (error) {
-                resultElem.innerHTML = `<div class="error">Error: ${error.message}</div>`;
-            }
-        });
-    </script>
+    <div class="tab-content" id="cast-mentions-tab">
+      <h2>Cast Mentions</h2>
+      <p>Get casts that mention a specific user</p>
+      <div class="form-group">
+        <label for="mentionFid">FID</label>
+        <input type="text" id="mentionFid" placeholder="Enter FID">
+      </div>
+      <div class="form-group">
+        <label for="mentionLimit">Limit</label>
+        <input type="number" id="mentionLimit" value="20" min="1" max="100">
+      </div>
+      <button id="fetchMentionsBtn">Get Mentions</button>
+      <div class="result" id="mentionsResult"></div>
+    </div>
+  </div>
+</div>
+<script src="main.js"></script>
 </body>
 </html>

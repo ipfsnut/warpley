@@ -86,6 +86,57 @@ Example:
 GET /.netlify/functions/warpcast-api?comprehensiveFeed=true&channelLimit=10&totalCastLimit=50
 ```
 
+### Cast Replies
+
+```
+GET /.netlify/functions/warpcast-api?castReplies=true
+```
+
+Parameters:
+- `parentFid` (required if `castUrl` not provided): FID of the parent cast
+- `parentHash` (required if `castUrl` not provided): Hash of the parent cast
+- `castUrl` (required if `parentFid` and `parentHash` not provided): URL of the cast
+- `limit` (optional): Number of replies to retrieve (default: 20, max: 100)
+- `cursor` (optional): Pagination cursor for fetching more replies
+
+Examples:
+```
+GET /.netlify/functions/warpcast-api?castReplies=true&parentFid=226&parentHash=0xa48dd46161d8e57725f5e26e34ec19c13ff7f3b9
+```
+
+```
+GET /.netlify/functions/warpcast-api?castReplies=true&castUrl=https://warpcast.com/username/0xa48dd46161d8e57725f5e26e34ec19c13ff7f3b9
+```
+
+### Cast Mentions
+
+```
+GET /.netlify/functions/warpcast-api?castMentions=true
+```
+
+Parameters:
+- `mentionFid` (required): FID of the user mentioned in casts
+- `limit` (optional): Number of mentions to retrieve (default: 20, max: 100)
+- `cursor` (optional): Pagination cursor for fetching more mentions
+
+Example:
+```
+GET /.netlify/functions/warpcast-api?castMentions=true&mentionFid=6833
+```
+
+### Comprehensive Feed with Replies
+
+The comprehensive feed endpoint now supports including replies:
+
+Parameters:
+- `includeReplies` (optional): Set to 'true' to include replies in the feed
+- `repliesPerCast` (optional): Number of replies to fetch per cast (default: 3, max: 10)
+- `replySortBy` (optional): Sort order for replies - 'engagement' (default) or 'recent'
+
+Example:
+```
+GET /.netlify/functions/warpcast-api?comprehensiveFeed=true&includeReplies=true&repliesPerCast=5&replySortBy=recent
+```
 ## Web Interface
 
 The included HTML interface allows you to:
