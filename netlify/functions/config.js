@@ -29,6 +29,7 @@ module.exports = {
   endpoints: {
     allChannels: 'https://api.warpcast.com/v2/all-channels',
     channelFollowers: 'https://api.warpcast.com/v1/channel-followers',
-    userCasts: 'https://api.warpcast.com/v2/casts'
+    userCasts: 'https://api.warpcast.com/v2/casts',
+    channelDetails: 'https://api.warpcast.com/v1/channel'
   }
 };
