@@ -88,6 +88,34 @@
         .tab-content.active {
             display: block;
         }
+        .cast {
+            margin-bottom: 15px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+        }
+        .cast-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .cast-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .cast-username {
+            font-weight: bold;
+        }
+        .cast-text {
+            margin-bottom: 10px;
+        }
+        .cast-stats {
+            color: #666;
+            font-size: 0.9em;
+        }
     </style>
 </head>
 <body>
@@ -100,6 +128,7 @@
                 <div class="tab active" data-tab="channel">Channel Info</div>
                 <div class="tab" data-tab="address">User Address</div>
                 <div class="tab" data-tab="all-channels">All Channels</div>
+                <div class="tab" data-tab="comprehensive">Comprehensive Feed</div>
             </div>
 
             <div class="tab-content active" id="channel-tab">
@@ -134,6 +163,34 @@
                 </div>
                 <button id="fetchAllChannelsBtn">Fetch All Channels</button>
                 <div class="result" id="allChannelsResult"></div>
+            </div>
+
+            <div class="tab-content" id="comprehensive-tab">
+                <h2>Comprehensive Feed</h2>
+                <p>Get trending content from top channels and their followers</p>
+                
+                <div class="form-group">
+                    <label for="channelLimit">Top Channels</label>
+                    <input type="number" id="channelLimit" value="10" min="1" max="50" placeholder="Number of top channels to analyze">
+                </div>
+                
+                <div class="form-group">
+                    <label for="followerLimit">Followers per Channel</label>
+                    <input type="number" id="followerLimit" value="10" min="1" max="50" placeholder="Number of followers to analyze per channel">
+                </div>
+                
+                <div class="form-group">
+                    <label for="castLimit">Casts per Follower</label>
+                    <input type="number" id="castLimit" value="5" min="1" max="20" placeholder="Number of recent casts to fetch per follower">
+                </div>
+                
+                <div class="form-group">
+                    <label for="totalCastLimit">Total Casts Limit</label>
+                    <input type="number" id="totalCastLimit" value="100" min="1" max="500" placeholder="Maximum number of casts to return">
+                </div>
+                
+                <button id="fetchComprehensiveBtn">Fetch Comprehensive Feed</button>
+                <div class="result" id="comprehensiveResult"></div>
             </div>
         </div>
     </div>
@@ -216,6 +273,66 @@
                 const data = await response.json();
                 
                 resultElem.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                resultElem.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        });
+
+        // Fetch comprehensive feed
+        document.getElementById('fetchComprehensiveBtn').addEventListener('click', async () => {
+            const channelLimit = document.getElementById('channelLimit').value;
+            const followerLimit = document.getElementById('followerLimit').value;
+            const castLimit = document.getElementById('castLimit').value;
+            const totalCastLimit = document.getElementById('totalCastLimit').value;
+            
+            const resultElem = document.getElementById('comprehensiveResult');
+            resultElem.innerHTML = '<div class="loading">Loading trending content...</div>';
+            
+            try {
+                const response = await fetch(`/.netlify/functions/comprehensive-feed?channelLimit=${channelLimit}&followerLimit=${followerLimit}&castLimit=${castLimit}&totalCastLimit=${totalCastLimit}`);
+                
+                if (!response.ok) {
+                    throw new Error(`API returned ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                // Display stats
+                let html = `
+                    <h3>Results</h3>
+                    <p>Analyzed ${data.channels} channels with ${data.uniqueFollowers} unique followers.</p>
+                    <p>Found ${data.totalCastsCollected} trending casts.</p>
+                `;
+                
+                // Display casts in a formatted way
+                if (data.casts && data.casts.length > 0) {
+                    html += `<h3>Top Trending Casts</h3>`;
+                    
+                    data.casts.forEach(cast => {
+                        html += `
+                            <div class="cast">
+                                <div class="cast-header">
+                                    <img class="cast-avatar" src="${cast.author?.pfp?.url || 'https://via.placeholder.com/40'}" alt="Avatar">
+                                    <div>
+                                        <div class="cast-username">${cast.author?.username || 'Unknown User'}</div>
+                                        <div>${cast.author?.displayName || ''}</div>
+                                    </div>
+                                </div>
+                                <div class="cast-text">${cast.text}</div>
+                                <div class="cast-stats">
+                                    ❤️ ${cast.reactions?.count || 0} • 
+                                    🔄 ${cast.recasts?.count || 0} • 
+                                    💬 ${cast.replies?.count || 0} •
+                                    Engagement Score: ${cast.engagement || 0}
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    html += `<p>No casts found.</p>`;
+                }
+                
+                resultElem.innerHTML = html;
             } catch (error) {
                 resultElem.innerHTML = `<div class="error">Error: ${error.message}</div>`;
             }
