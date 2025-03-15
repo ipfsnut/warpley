@@ -41,9 +41,12 @@ exports.handler = async function(event, context) {
       
       let apiUrl;
       if (url) {
-        apiUrl = `https://api.warpcast.com/v2/cast-replies-by-url?url=${encodeURIComponent(url)}&limit=${limit}`;
+        // For URL-based queries, we'll need to extract the FID and hash from the URL
+        // This is a placeholder - you might need a different approach
+        apiUrl = `https://api.warpcast.com/v2/casts-by-url?url=${encodeURIComponent(url)}&limit=${limit}`;
       } else {
-        apiUrl = `https://api.warpcast.com/v2/cast-replies?fid=${fid}&hash=${hash}&limit=${limit}`;
+        // Using the pattern from working comprehensive-feed.js
+        apiUrl = `https://api.warpcast.com/v2/casts?parentFid=${fid}&parentHash=${hash}&limit=${limit}`;
       }
       
       if (cursor) {
@@ -83,7 +86,8 @@ exports.handler = async function(event, context) {
         };
       }
       
-      let apiUrl = `https://api.warpcast.com/v2/mentions?fid=${fid}&limit=${limit}`;
+      // Using the pattern from working comprehensive-feed.js but with mentions
+      let apiUrl = `https://api.warpcast.com/v2/casts?mentionedFid=${fid}&limit=${limit}`;
       
       if (cursor) {
         apiUrl += `&cursor=${cursor}`;
@@ -111,7 +115,8 @@ exports.handler = async function(event, context) {
     if (params.allChannels === 'true') {
       const limit = Math.min(parseInt(params.limit || 100), 100);
       
-      const response = await fetch(`https://api.warpcast.com/v2/channels?limit=${limit}`);
+      // Using the working endpoint from comprehensive-feed.js
+      const response = await fetch('https://api.warpcast.com/v2/all-channels');
       
       if (!response.ok) {
         throw new Error(`Failed to fetch channels: ${response.status} ${response.statusText}`);
@@ -119,10 +124,18 @@ exports.handler = async function(event, context) {
       
       const data = await response.json();
       
+      // Sort channels by follower count and take top ones if limit is specified
+      let channels = data.result?.channels || [];
+      if (limit) {
+        channels = channels
+          .sort((a, b) => b.followerCount - a.followerCount)
+          .slice(0, limit);
+      }
+      
       return {
         statusCode: 200,
         body: JSON.stringify({
-          channels: data.result?.channels || []
+          channels: channels
         })
       };
     }
@@ -131,18 +144,31 @@ exports.handler = async function(event, context) {
     if (params.channelId) {
       const channelId = params.channelId;
       
-      const response = await fetch(`https://api.warpcast.com/v2/channel?id=${channelId}`);
+      // Using the pattern from working comprehensive-feed.js
+      // First get all channels, then filter for the one we want
+      const response = await fetch('https://api.warpcast.com/v2/all-channels');
       
       if (!response.ok) {
-        throw new Error(`Failed to fetch channel: ${response.status} ${response.statusText}`);
+        throw new Error(`Failed to fetch channels: ${response.status} ${response.statusText}`);
       }
       
       const data = await response.json();
+      const channels = data.result?.channels || [];
+      const channel = channels.find(c => c.id === channelId);
+      
+      if (!channel) {
+        return {
+          statusCode: 404,
+          body: JSON.stringify({
+            error: `Channel with ID ${channelId} not found`
+          })
+        };
+      }
       
       return {
         statusCode: 200,
         body: JSON.stringify({
-          channel: data.result?.channel || null
+          channel: channel
         })
       };
     }
@@ -151,7 +177,7 @@ exports.handler = async function(event, context) {
     if (params.username && !params.tokenAddress && !process.env.TOKEN_ADDRESS) {
       const username = params.username;
       
-      // Step 1: Find the user's FID by username
+      // Step 1: Find the user by username
       const userResponse = await fetch(`https://api.warpcast.com/v2/user-by-username?username=${username}`);
       
       if (!userResponse.ok) {
@@ -159,30 +185,21 @@ exports.handler = async function(event, context) {
       }
       
       const userData = await userResponse.json();
-      const fid = userData.result?.user?.fid;
+      const user = userData.result?.user;
       
-      if (!fid) {
+      if (!user) {
         return {
           statusCode: 404,
           body: JSON.stringify({
-            error: 'User not found or FID not available'
+            error: 'User not found'
           })
         };
       }
       
-      // Step 2: Get the user's Ethereum address
-      const addressResponse = await fetch(`https://api.warpcast.com/v2/user-by-fid?fid=${fid}`);
-      
-      if (!addressResponse.ok) {
-        throw new Error(`Failed to get user details: ${addressResponse.status} ${addressResponse.statusText}`);
-      }
-      
-      const addressData = await addressResponse.json();
-      
       return {
         statusCode: 200,
         body: JSON.stringify({
-          user: addressData.result?.user || null
+          user: user
         })
       };
     }
