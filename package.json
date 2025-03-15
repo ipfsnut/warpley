@@ -1,0 +1,8 @@
+{
+    "name": "warpcast-chatbot-api",
+    "version": "1.0.0",
+    "description": "Serverless API for accessing Warpcast data for chatbots",
+    "dependencies": {
+      "node-fetch": "^3.3.0"
+    }
+  }
