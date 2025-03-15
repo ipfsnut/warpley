@@ -60,7 +60,6 @@ exports.handler = async function(event, context) {
     // Convert Set to Array
     const followerFids = Array.from(allFollowerFids);
     console.log(`Found ${followerFids.length} unique followers across ${channels.length} channels`);
-    
     // Step 3: Get recent casts from each follower
     console.log('Fetching recent casts from followers...');
     
@@ -85,6 +84,11 @@ exports.handler = async function(event, context) {
           
           // Add casts to our collection
           allCasts = allCasts.concat(casts);
+
+          if (castsData.result?.casts && castsData.result.casts.length > 0) {
+            console.log('Sample cast structure from Warpcast API:', 
+              JSON.stringify(castsData.result.casts[0], null, 2));
+          }
         } catch (error) {
           console.error(`Error fetching casts for user ${fid}:`, error);
         }
@@ -92,14 +96,21 @@ exports.handler = async function(event, context) {
     }
     
     // Step 4: Sort casts by engagement (likes + recasts)
-    allCasts = allCasts
-      .map(cast => ({
+    allCasts = allCasts.map(cast => {
+      console.log('Cast structure before formatting:', 
+        JSON.stringify({
+          text: cast.text,
+          body: cast.body,
+          castAddBody: cast.castAddBody,
+          data: cast.data
+        }, null, 2));
+      
+      return {
         ...cast,
         engagement: (cast.reactions?.count || 0) + (cast.recasts?.count || 0)
-      }))
-      .sort((a, b) => b.engagement - a.engagement)
+      };
+    }).sort((a, b) => b.engagement - a.engagement)
       .slice(0, totalCastLimit);
-    
     // Step 5: Format the data for API consumption
     const formattedCasts = allCasts.map(cast => ({
       id: cast.hash,
