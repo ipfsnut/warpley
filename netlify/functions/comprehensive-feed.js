@@ -1,18 +1,36 @@
 // netlify/functions/comprehensive-feed.js
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+const config = require('./config');
 
 exports.handler = async function(event, context) {
-  // Parse query parameters
+  // Parse query parameters with defaults from config
   const params = event.queryStringParameters || {};
-  const channelLimit = Math.min(parseInt(params.channelLimit || 20), 50); // How many channels to process
-  const followerLimit = Math.min(parseInt(params.followerLimit || 10), 50); // Followers per channel
-  const castLimit = Math.min(parseInt(params.castLimit || 5), 20); // Casts per follower
-  const totalCastLimit = Math.min(parseInt(params.totalCastLimit || 100), 500); // Total casts to return
+  const { limits, endpoints } = config;
+  
+  const channelLimit = Math.min(
+    parseInt(params.channelLimit || limits.defaultChannelLimit), 
+    limits.maxChannelLimit
+  );
+  
+  const followerLimit = Math.min(
+    parseInt(params.followerLimit || limits.defaultFollowerLimit), 
+    limits.maxFollowerLimit
+  );
+  
+  const castLimit = Math.min(
+    parseInt(params.castLimit || limits.defaultCastLimit), 
+    limits.maxCastLimit
+  );
+  
+  const totalCastLimit = Math.min(
+    parseInt(params.totalCastLimit || limits.defaultTotalCastLimit), 
+    limits.maxTotalCastLimit
+  );
   
   try {
     // Step 1: Get all channels
     console.log('Fetching all channels...');
-    const allChannelsResponse = await fetch('https://api.warpcast.com/v2/all-channels');
+    const allChannelsResponse = await fetch(endpoints.allChannels);
     
     if (!allChannelsResponse.ok) {
       throw new Error(`Failed to fetch all channels: ${allChannelsResponse.status} ${allChannelsResponse.statusText}`);
@@ -20,6 +38,24 @@ exports.handler = async function(event, context) {
     
     const allChannelsData = await allChannelsResponse.json();
     let channels = allChannelsData.result?.channels || [];
+    
+    if (channels.length === 0) {
+      console.log('No channels returned from API. Raw response:', JSON.stringify(allChannelsData));
+      return {
+        statusCode: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*"
+        },
+        body: JSON.stringify({
+          meta: {
+            error: "No channels found",
+            timestamp: new Date().toISOString()
+          },
+          casts: []
+        })
+      };
+    }
     
     // Sort channels by follower count and take top ones
     channels = channels
@@ -33,103 +69,170 @@ exports.handler = async function(event, context) {
     
     let allFollowerFids = new Set(); // Use a Set to avoid duplicates
     
-    for (const channel of channels) {
-      try {
-        console.log(`Fetching followers for channel: ${channel.id}`);
-        const followersResponse = await fetch(`https://api.warpcast.com/v1/channel-followers?channelId=${channel.id}&limit=${followerLimit}`);
-        
-        if (!followersResponse.ok) {
-          console.error(`Failed to fetch followers for channel ${channel.id}: ${followersResponse.status}`);
-          continue;
-        }
-        
-        const followersData = await followersResponse.json();
-        const followers = followersData.result?.users || [];
-        
-        // Add followers to our set
-        followers.forEach(follower => {
-          if (follower.fid) {
-            allFollowerFids.add(follower.fid);
+    // Process channels in smaller batches to avoid rate limiting
+    const channelBatchSize = limits.channelBatchSize;
+    for (let i = 0; i < channels.length; i += channelBatchSize) {
+      const channelBatch = channels.slice(i, i + channelBatchSize);
+      
+      await Promise.all(channelBatch.map(async (channel) => {
+        try {
+          console.log(`Fetching followers for channel: ${channel.id}`);
+          const followersResponse = await fetch(`${endpoints.channelFollowers}?channelId=${channel.id}&limit=${followerLimit}`);
+          
+          if (!followersResponse.ok) {
+            console.error(`Failed to fetch followers for channel ${channel.id}: ${followersResponse.status}`);
+            return;
           }
-        });
-      } catch (error) {
-        console.error(`Error fetching followers for channel ${channel.id}:`, error);
+          
+          const followersData = await followersResponse.json();
+          const followers = followersData.result?.users || [];
+          
+          // Add followers to our set
+          followers.forEach(follower => {
+            if (follower.fid) {
+              allFollowerFids.add(follower.fid);
+            }
+          });
+        } catch (error) {
+          console.error(`Error fetching followers for channel ${channel.id}:`, error);
+        }
+      }));
+      
+      // Add a small delay between batches to avoid rate limiting
+      if (i + channelBatchSize < channels.length) {
+        await new Promise(resolve => setTimeout(resolve, limits.channelBatchDelay));
       }
     }
     
     // Convert Set to Array
     const followerFids = Array.from(allFollowerFids);
     console.log(`Found ${followerFids.length} unique followers across ${channels.length} channels`);
+    
+    // If no followers found, return early with an informative message
+    if (followerFids.length === 0) {
+      return {
+        statusCode: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*"
+        },
+        body: JSON.stringify({
+          meta: {
+            channels: channels.length,
+            uniqueFollowers: 0,
+            totalCastsCollected: 0,
+            timestamp: new Date().toISOString(),
+            message: "No followers found for the selected channels"
+          },
+          casts: []
+        })
+      };
+    }
+    
     // Step 3: Get recent casts from each follower
     console.log('Fetching recent casts from followers...');
     
     let allCasts = [];
     
     // Process followers in smaller batches to avoid rate limiting
-    const batchSize = 10;
-    for (let i = 0; i < Math.min(followerFids.length, followerLimit); i += batchSize) {
-      const batch = followerFids.slice(i, i + batchSize);
+    const followerBatchSize = limits.followerBatchSize;
+    const maxFollowers = Math.min(followerFids.length, followerLimit);
+    
+    for (let i = 0; i < maxFollowers; i += followerBatchSize) {
+      const batch = followerFids.slice(i, i + followerBatchSize);
       
-      await Promise.all(batch.map(async (fid) => {
+      const batchPromises = batch.map(async (fid) => {
         try {
-          const castsResponse = await fetch(`https://api.warpcast.com/v2/casts?fid=${fid}&limit=${castLimit}`);
+          const castsResponse = await fetch(`${endpoints.userCasts}?fid=${fid}&limit=${castLimit}`);
           
           if (!castsResponse.ok) {
             console.error(`Failed to fetch casts for user ${fid}: ${castsResponse.status}`);
-            return;
+            return [];
           }
           
           const castsData = await castsResponse.json();
-          const casts = castsData.result?.casts || [];
-          
-          // Add casts to our collection
-          allCasts = allCasts.concat(casts);
-
-          if (castsData.result?.casts && castsData.result.casts.length > 0) {
-            console.log('Sample cast structure from Warpcast API:', 
-              JSON.stringify(castsData.result.casts[0], null, 2));
-          }
+          return castsData.result?.casts || [];
         } catch (error) {
           console.error(`Error fetching casts for user ${fid}:`, error);
+          return [];
         }
-      }));
+      });
+      
+      const batchResults = await Promise.all(batchPromises);
+      batchResults.forEach(casts => {
+        allCasts = allCasts.concat(casts);
+      });
+      
+      // Add a small delay between batches to avoid rate limiting
+      if (i + followerBatchSize < maxFollowers) {
+        await new Promise(resolve => setTimeout(resolve, limits.followerBatchDelay));
+      }
+    }
+    
+    console.log(`Fetched ${allCasts.length} casts in total`);
+    
+    // If no casts found, return early with an informative message
+    if (allCasts.length === 0) {
+      return {
+        statusCode: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*"
+        },
+        body: JSON.stringify({
+          meta: {
+            channels: channels.length,
+            uniqueFollowers: followerFids.length,
+            totalCastsCollected: 0,
+            timestamp: new Date().toISOString(),
+            message: "No casts found from the followers"
+          },
+          casts: []
+        })
+      };
     }
     
     // Step 4: Sort casts by engagement (likes + recasts)
     allCasts = allCasts.map(cast => {
-      console.log('Cast structure before formatting:', 
-        JSON.stringify({
-          text: cast.text,
-          body: cast.body,
-          castAddBody: cast.castAddBody,
-          data: cast.data
-        }, null, 2));
-      
+      const engagement = (cast.reactions?.count || 0) + (cast.recasts?.count || 0);
       return {
         ...cast,
-        engagement: (cast.reactions?.count || 0) + (cast.recasts?.count || 0)
+        engagement
       };
     }).sort((a, b) => b.engagement - a.engagement)
       .slice(0, totalCastLimit);
+    
     // Step 5: Format the data for API consumption
-    const formattedCasts = allCasts.map(cast => ({
-      id: cast.hash,
-      author: {
-        username: cast.author?.username,
-        displayName: cast.author?.displayName,
-        profileImage: cast.author?.pfp?.url,
-        fid: cast.author?.fid
-      },
-      text: cast.text, 
-      timestamp: cast.timestamp,
-      engagement: {
-        likes: cast.reactions?.count || 0,
-        recasts: cast.recasts?.count || 0,
-        replies: cast.replies?.count || 0,
-        total: cast.engagement
-      },
-      embeds: cast.embeds || []
-    }));
+    const formattedCasts = allCasts.map(cast => {
+      // Extract text from the appropriate field
+      let text = '';
+      if (cast.text) {
+        text = cast.text;
+      } else if (cast.castAddBody && cast.castAddBody.text) {
+        text = cast.castAddBody.text;
+      } else if (cast.body && cast.body.text) {
+        text = cast.body.text;
+      }
+      
+      return {
+        id: cast.hash,
+        author: {
+          username: cast.author?.username,
+          displayName: cast.author?.displayName,
+          profileImage: cast.author?.pfp?.url,
+          fid: cast.author?.fid
+        },
+        text: text,
+        timestamp: cast.timestamp,
+        engagement: {
+          likes: cast.reactions?.count || 0,
+          recasts: cast.recasts?.count || 0,
+          replies: cast.replies?.count || 0,
+          total: cast.engagement
+        },
+        embeds: cast.embeds || []
+      };
+    });
     
     return {
       statusCode: 200,
@@ -158,7 +261,8 @@ exports.handler = async function(event, context) {
       },
       body: JSON.stringify({
         error: 'Failed to generate comprehensive feed',
-        message: error.message
+        message: error.message,
+        stack: error.stack // Include stack trace for debugging
       })
     };
   }
