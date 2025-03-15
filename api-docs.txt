@@ -12,6 +12,9 @@ https://warpley.netlify.app/.netlify/functions/warpcast-api
 Endpoints
 ---------
 
+## Follower Feed
+
+Get recent casts from followers of a specific channel, sorted by engagement.
 1. Channel Information
 ---------------------
 Retrieve details about a specific Farcaster channel.

@@ -34,6 +34,10 @@ exports.handler = async function(event, context) {
         statusCode: response.status,
         body: JSON.stringify(data)
       };
+    } else if (params.followerFeed === 'true' || params.followerFeed) {
+      // Call the follower feed handler
+      const followerFeedHandler = require('./follower-feed').handler;
+      return followerFeedHandler(event, context);
     } else {
       // Default response with available endpoints
       return {
