@@ -25,59 +25,45 @@ exports.handler = async function(event, context) {
   }
   
   try {
-    // First, get the user's Ethereum address using the Neynar API
-    const apiKey = process.env.NEYNAR_API_KEY || 'NEYNAR_API_UR743U79VP';
-    const userEndpoint = `https://api.neynar.com/v2/farcaster/user/search?q=${username}&limit=1`;
+    console.log(`Fetching user data for username: ${username}`);
     
-    const userResponse = await fetch(userEndpoint, {
-      headers: {
-        'accept': 'application/json',
-        'api_key': apiKey
-      }
-    });
+    // First, get the user's Ethereum address from their Warpcast profile
+    const userResponse = await fetch(`https://warpcast.com/~/api/user-by-username?username=${username}`);
     
     if (!userResponse.ok) {
-      throw new Error(`Neynar API returned ${userResponse.status}: ${userResponse.statusText}`);
+      throw new Error(`Warpcast API returned ${userResponse.status}: ${userResponse.statusText}`);
     }
     
     const userData = await userResponse.json();
+    console.log(`User API response status: ${userResponse.status}`);
     
-    if (!userData.users || userData.users.length === 0) {
+    const ethAddress = userData.result?.user?.verifications?.ethereum;
+    
+    if (!ethAddress) {
       return {
         statusCode: 404,
         body: JSON.stringify({
-          error: 'User not found'
+          error: 'User has no verified Ethereum address'
         })
       };
     }
     
-    const user = userData.users[0];
-    
-    // Get the user's verified ETH addresses
-    const verifications = user.verifications || [];
-    
-    if (verifications.length === 0) {
-      return {
-        statusCode: 404,
-        body: JSON.stringify({
-          error: 'User has no verified Ethereum addresses'
-        })
-      };
-    }
-    
-    const ethAddress = verifications[0]; // Get first verified address
+    console.log(`Found ETH address for ${username}: ${ethAddress}`);
     
     // Now fetch the token balance using a public Ethereum API (example with Etherscan API)
     const etherscanApiKey = process.env.ETHERSCAN_API_KEY || ''; // Optional, higher rate limits with API key
-    const tokenBalanceResponse = await fetch(
-      `https://api.etherscan.io/api?module=account&action=tokenbalance&contractaddress=${tokenAddress}&address=${ethAddress}&tag=latest${etherscanApiKey ? `&apikey=${etherscanApiKey}` : ''}`
-    );
+    const tokenBalanceUrl = `https://api.etherscan.io/api?module=account&action=tokenbalance&contractaddress=${tokenAddress}&address=${ethAddress}&tag=latest${etherscanApiKey ? `&apikey=${etherscanApiKey}` : ''}`;
+    
+    console.log(`Requesting token balance from: ${tokenBalanceUrl}`);
+    
+    const tokenBalanceResponse = await fetch(tokenBalanceUrl);
     
     if (!tokenBalanceResponse.ok) {
       throw new Error(`Etherscan API returned ${tokenBalanceResponse.status}: ${tokenBalanceResponse.statusText}`);
     }
     
     const balanceData = await tokenBalanceResponse.json();
+    console.log(`Token balance API response: ${JSON.stringify(balanceData)}`);
     
     // Format and return the balance info
     return {
@@ -87,8 +73,7 @@ exports.handler = async function(event, context) {
         'Cache-Control': 'public, max-age=300' // Cache for 5 minutes
       },
       body: JSON.stringify({
-        username: user.username,
-        displayName: user.display_name,
+        username,
         ethAddress,
         tokenAddress,
         balance: balanceData.result,
@@ -102,7 +87,8 @@ exports.handler = async function(event, context) {
       statusCode: 500,
       body: JSON.stringify({
         error: 'Failed to fetch token balance',
-        message: error.message
+        message: error.message,
+        stack: error.stack
       })
     };
   }
