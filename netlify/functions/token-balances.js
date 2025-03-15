@@ -25,24 +25,47 @@ exports.handler = async function(event, context) {
   }
   
   try {
-    // First, get the user's Ethereum address from their Warpcast profile
-    const userResponse = await fetch(`https://api.warpcast.com/v2/user-by-username?username=${username}`);
+    // First, get the user's Ethereum address using the Neynar API
+    const apiKey = process.env.NEYNAR_API_KEY || 'NEYNAR_API_UR743U79VP';
+    const userEndpoint = `https://api.neynar.com/v2/farcaster/user/search?q=${username}&limit=1`;
+    
+    const userResponse = await fetch(userEndpoint, {
+      headers: {
+        'accept': 'application/json',
+        'api_key': apiKey
+      }
+    });
     
     if (!userResponse.ok) {
-      throw new Error(`Warpcast API returned ${userResponse.status}: ${userResponse.statusText}`);
+      throw new Error(`Neynar API returned ${userResponse.status}: ${userResponse.statusText}`);
     }
     
     const userData = await userResponse.json();
-    const ethAddress = userData.result.user.verifications.ethereum;
     
-    if (!ethAddress) {
+    if (!userData.users || userData.users.length === 0) {
       return {
         statusCode: 404,
         body: JSON.stringify({
-          error: 'User has no verified Ethereum address'
+          error: 'User not found'
         })
       };
     }
+    
+    const user = userData.users[0];
+    
+    // Get the user's verified ETH addresses
+    const verifications = user.verifications || [];
+    
+    if (verifications.length === 0) {
+      return {
+        statusCode: 404,
+        body: JSON.stringify({
+          error: 'User has no verified Ethereum addresses'
+        })
+      };
+    }
+    
+    const ethAddress = verifications[0]; // Get first verified address
     
     // Now fetch the token balance using a public Ethereum API (example with Etherscan API)
     const etherscanApiKey = process.env.ETHERSCAN_API_KEY || ''; // Optional, higher rate limits with API key
@@ -64,7 +87,8 @@ exports.handler = async function(event, context) {
         'Cache-Control': 'public, max-age=300' // Cache for 5 minutes
       },
       body: JSON.stringify({
-        username,
+        username: user.username,
+        displayName: user.display_name,
         ethAddress,
         tokenAddress,
         balance: balanceData.result,
