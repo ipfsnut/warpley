@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warpcast API Viewer</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        h1, h2, h3 {
+            color: #1a1a1a;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            align-items: flex-end;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            min-width: 200px;
+        }
+        label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        input, select, button {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #7b5ff5;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            min-width: 120px;
+        }
+        button:hover {
+            background-color: #6344e2;
+        }
+        .cast {
+            border-bottom: 1px solid #eee;
+            padding: 15px 0;
+        }
+        .cast:last-child {
+            border-bottom: none;
+        }
+        .cast-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .username {
+            font-weight: 600;
+            color: #7b5ff5;
+        }
+        .timestamp {
+            color: #888;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+        .cast-text {
+            margin-bottom: 8px;
+        }
+        .cast-stats {
+            display: flex;
+            gap: 15px;
+            color: #666;
+            font-size: 14px;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+            color: #666;
+        }
+        .error {
+            background-color: #fff0f0;
+            color: #e53e3e;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .balance-result {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px;
+            background-color: #f0f9ff;
+            border-radius: 4px;
+        }
+        .balance-value {
+            font-weight: 600;
+            font-size: 18px;
+            color: #2c5282;
+        }
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+        .tab.active {
+            border-bottom: 2px solid #7b5ff5;
+            font-weight: 600;
+        }
+        #apiStatus {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+            background-color: #ccc;
+        }
+        #apiStatus.online {
+            background-color: #48bb78;
+        }
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .form-group {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>Warpcast API Viewer</h1>
+            <div class="status-bar">
+                <div>
+                    <span id="apiStatus"></span>
+                    <span id="apiStatusText">Checking API status...</span>
+                </div>
+                <div id="timestamp"></div>
+            </div>
+            
+            <div class="tabs">
+                <div class="tab active" id="trendingTab">Trending Casts</div>
+                <div class="tab" id="balancesTab">Token Balances</div>
+            </div>
+            
+            <div id="trendingView">
+                <div class="controls">
+                    <div class="form-group">
+                        <label for="timeframe">Time Frame</label>
+                        <select id="timeframe">
+                            <option value="1h">1 hour</option>
+                            <option value="6h">6 hours</option>
+                            <option value="12h">12 hours</option>
+                            <option value="24h" selected>24 hours</option>
+                            <option value="7d">7 days</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="limit">Number of Casts</label>
+                        <select id="limit">
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="filter">Filter (optional)</label>
+                        <input type="text" id="filter" placeholder="e.g. ethereum">
+                    </div>
+                    <button id="fetchTrendingBtn">Fetch Trending</button>
+                </div>
+                
+                <div id="error" class="error" style="display: none;"></div>
+                
+                <div id="trendingResults"></div>
+            </div>
+            
+            <div id="balancesView" style="display: none;">
+                <div class="controls">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" placeholder="e.g. vitalik">
+                    </div>
+                    <div class="form-group">
+                        <label for="tokenAddress">Token Address</label>
+                        <input type="text" id="tokenAddress" placeholder="0x...">
+                    </div>
+                    <button id="fetchBalanceBtn">Fetch Balance</button>
+                </div>
+                
+                <div id="balanceError" class="error" style="display: none;"></div>
+                
+                <div id="balanceResults"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Get base API URL dynamically
+        const baseUrl = window.location.origin;
+        
+        // Elements
+        const trendingTab = document.getElementById('trendingTab');
+        const balancesTab = document.getElementById('balancesTab');
+        const trendingView = document.getElementById('trendingView');
+        const balancesView = document.getElementById('balancesView');
+        const fetchTrendingBtn = document.getElementById('fetchTrendingBtn');
+        const fetchBalanceBtn = document.getElementById('fetchBalanceBtn');
+        const trendingResults = document.getElementById('trendingResults');
+        const balanceResults = document.getElementById('balanceResults');
+        const errorElement = document.getElementById('error');
+        const balanceErrorElement = document.getElementById('balanceError');
+        const apiStatus = document.getElementById('apiStatus');
+        const apiStatusText = document.getElementById('apiStatusText');
+        const timestampElement = document.getElementById('timestamp');
+        
+        // Tab switching
+        trendingTab.addEventListener('click', () => {
+            trendingTab.classList.add('active');
+            balancesTab.classList.remove('active');
+            trendingView.style.display = 'block';
+            balancesView.style.display = 'none';
+        });
+        
+        balancesTab.addEventListener('click', () => {
+            balancesTab.classList.add('active');
+            trendingTab.classList.remove('active');
+            balancesView.style.display = 'block';
+            trendingView.style.display = 'none';
+        });
+        
+        // Check API status
+        async function checkApiStatus() {
+            try {
+                const response = await fetch(`${baseUrl}/api/trending-casts?limit=1`);
+                if (response.ok) {
+                    apiStatus.classList.add('online');
+                    apiStatusText.textContent = 'API Online';
+                } else {
+                    apiStatusText.textContent = 'API Error: ' + response.status;
+                }
+            } catch (error) {
+                apiStatusText.textContent = 'API Offline';
+            }
+        }
+        
+        // Update timestamp
+        function updateTimestamp() {
+            const now = new Date();
+            timestampElement.textContent = now.toLocaleString();
+        }
+        
+        // Format date
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString();
+        }
+        
+        // Fetch trending casts
+        async function fetchTrending() {
+            const timeframe = document.getElementById('timeframe').value;
+            const limit = document.getElementById('limit').value;
+            const filter = document.getElementById('filter').value;
+            
+            let url = `${baseUrl}/api/trending-casts?timeframe=${timeframe}&limit=${limit}`;
+            if (filter) {
+                url += `&filter=${encodeURIComponent(filter)}`;
+            }
+            
+            errorElement.style.display = 'none';
+            trendingResults.innerHTML = '<div class="loading">Loading trending casts...</div>';
+            
+            try {
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`API returned status ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (!data.casts || data.casts.length === 0) {
+                    trendingResults.innerHTML = '<div class="loading">No casts found. Try different filters.</div>';
+                    return;
+                }
+                
+                updateTimestamp();
+                
+                let html = '';
+                data.casts.forEach(cast => {
+                    html += `
+                        <div class="cast">
+                            <div class="cast-header">
+                                <span class="username">@${cast.author.username}</span>
+                                <span class="timestamp">${formatDate(cast.timestamp)}</span>
+                            </div>
+                            <div class="cast-text">${cast.text}</div>
+                            <div class="cast-stats">
+                                <span>❤️ ${cast.reactions.count || 0}</span>
+                                <span>🔄 ${cast.replies.count || 0} replies</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                trendingResults.innerHTML = html;
+            } catch (error) {
+                errorElement.style.display = 'block';
+                errorElement.textContent = `Error: ${error.message}`;
+                trendingResults.innerHTML = '';
+            }
+        }
+        
+        // Fetch token balance
+        async function fetchBalance() {
+            const username = document.getElementById('username').value;
+            const tokenAddress = document.getElementById('tokenAddress').value;
+            
+            if (!username) {
+                balanceErrorElement.style.display = 'block';
+                balanceErrorElement.textContent = 'Error: Username is required';
+                return;
+            }
+            
+            if (!tokenAddress) {
+                balanceErrorElement.style.display = 'block';
+                balanceErrorElement.textContent = 'Error: Token address is required';
+                return;
+            }
+            
+            balanceErrorElement.style.display = 'none';
+            balanceResults.innerHTML = '<div class="loading">Fetching token balance...</div>';
+            
+            try {
+                const url = `${baseUrl}/api/token-balances?username=${username}&tokenAddress=${tokenAddress}`;
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `API returned status ${response.status}`);
+                }
+                
+                const data = await response.json();
+                updateTimestamp();
+                
+                // Format balance (adjust divisor based on token's decimals)
+                const formattedBalance = (data.balance / 1e18).toFixed(4);
+                
+                balanceResults.innerHTML = `
+                    <div class="balance-result">
+                        <div>
+                            <div>Username: <strong>@${data.username}</strong></div>
+                            <div>Ethereum Address: <code>${data.ethAddress}</code></div>
+                            <div>Token: <code>${data.tokenAddress}</code></div>
+                        </div>
+                        <div class="balance-value">${formattedBalance}</div>
+                    </div>
+                `;
+            } catch (error) {
+                balanceErrorElement.style.display = 'block';
+                balanceErrorElement.textContent = `Error: ${error.message}`;
+                balanceResults.innerHTML = '';
+            }
+        }
+        
+        // Event listeners
+        fetchTrendingBtn.addEventListener('click', fetchTrending);
+        fetchBalanceBtn.addEventListener('click', fetchBalance);
+        
+        // Initial load
+        checkApiStatus();
+        updateTimestamp();
+        
+        // Load trending casts on initial page load
+        fetchTrending();
+    </script>
+</body>
+</html>
