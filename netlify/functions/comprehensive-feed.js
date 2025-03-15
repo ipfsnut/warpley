@@ -2,30 +2,13 @@
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const config = require('./config');
 
-exports.handler = async function(event, context) {
-  // Parse query parameters with defaults from config
+eexports.handler = async function(event, context) {
+  // Parse query parameters without max limits
   const params = event.queryStringParameters || {};
-  const { limits, endpoints } = config;
-  
-  const channelLimit = Math.min(
-    parseInt(params.channelLimit || limits.defaultChannelLimit), 
-    limits.maxChannelLimit
-  );
-  
-  const followerLimit = Math.min(
-    parseInt(params.followerLimit || limits.defaultFollowerLimit), 
-    limits.maxFollowerLimit
-  );
-  
-  const castLimit = Math.min(
-    parseInt(params.castLimit || limits.defaultCastLimit), 
-    limits.maxCastLimit
-  );
-  
-  const totalCastLimit = Math.min(
-    parseInt(params.totalCastLimit || limits.defaultTotalCastLimit), 
-    limits.maxTotalCastLimit
-  );
+  const channelLimit = parseInt(params.channelLimit || 200); // How many channels to process
+  const followerLimit = parseInt(params.followerLimit || 100); // Followers per channel
+  const castLimit = parseInt(params.castLimit || 50); // Casts per follower
+  const totalCastLimit = parseInt(params.totalCastLimit || 1000); // Total casts to return
   
   try {
     // Step 1: Get all channels

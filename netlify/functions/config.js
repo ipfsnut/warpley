@@ -5,20 +5,16 @@ module.exports = {
   // API rate limiting and request parameters
   limits: {
     // Maximum number of channels to process
-    maxChannelLimit: 50,
-    defaultChannelLimit: 20,
+    defaultChannelLimit: 200,
     
     // Maximum number of followers to fetch per channel
-    maxFollowerLimit: 50,
-    defaultFollowerLimit: 10,
+    defaultFollowerLimit: 100,
     
     // Maximum number of casts to fetch per follower
-    maxCastLimit: 20,
-    defaultCastLimit: 5,
+    defaultCastLimit: 50,
     
     // Maximum total casts to return in the response
-    maxTotalCastLimit: 500,
-    defaultTotalCastLimit: 100,
+    defaultTotalCastLimit: 1000,
     
     // Batch sizes for processing to avoid rate limiting
     channelBatchSize: 5,
