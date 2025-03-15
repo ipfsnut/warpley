@@ -250,3 +250,5 @@ exports.handler = async function(event, context) {
     };
   }
 };
+
+const { endpoints, limits } = config;
