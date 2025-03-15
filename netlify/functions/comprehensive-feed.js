@@ -2,7 +2,7 @@
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const config = require('./config');
 
-eexports.handler = async function(event, context) {
+exports.handler = async function(event, context) {
   // Parse query parameters without max limits
   const params = event.queryStringParameters || {};
   const channelLimit = parseInt(params.channelLimit || 200); // How many channels to process
