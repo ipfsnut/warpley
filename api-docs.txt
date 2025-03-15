@@ -1,0 +1,202 @@
+Warpley API Documentation
+=========================
+
+Overview
+--------
+The Warpley API provides access to Farcaster data, allowing you to fetch channel information, user addresses, and trending content. This document outlines the available endpoints, parameters, and response formats.
+
+Base URL
+--------
+https://warpley.netlify.app/.netlify/functions/warpcast-api
+
+Endpoints
+---------
+
+1. Channel Information
+---------------------
+Retrieve details about a specific Farcaster channel.
+
+Request:
+GET /.netlify/functions/warpcast-api?channelId={CHANNEL_ID}
+
+Parameters:
+channelId (Required) - ID of the channel to fetch (e.g., memes, page, wake)
+
+Example Request:
+GET /.netlify/functions/warpcast-api?channelId=memes
+
+Response:
+{
+  "channel": {
+    "id": "memes",
+    "name": "memes",
+    "description": "Channel description",
+    "imageUrl": "https://example.com/image.jpg",
+    "followerCount": 12345,
+    "castCount": 6789
+  }
+}
+
+2. User Address Lookup
+---------------------
+Retrieve Ethereum address and optional token balance for a Farcaster user.
+
+Request:
+GET /.netlify/functions/warpcast-api?username={USERNAME}&tokenAddress={TOKEN_ADDRESS}
+
+Parameters:
+username (Required) - Farcaster username (e.g., vitalik, dwr)
+tokenAddress (Optional) - Ethereum token contract address to check balance
+
+Example Request:
+GET /.netlify/functions/warpcast-api?username=vitalik&tokenAddress=0x1234...
+
+Response:
+{
+  "user": {
+    "username": "vitalik",
+    "displayName": "Vitalik Buterin",
+    "profileImage": "https://example.com/profile.jpg",
+    "fid": 5650,
+    "addresses": {
+      "ethereum": "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"
+    },
+    "tokenBalance": "123.45" // Only if tokenAddress is provided
+  }
+}
+
+3. All Channels
+--------------
+Retrieve a list of all Farcaster channels.
+
+Request:
+GET /.netlify/functions/warpcast-api?allChannels=true&limit={LIMIT}
+
+Parameters:
+allChannels (Required) - Set to 'true' to fetch all channels
+limit (Optional) - Number of channels to retrieve (Default: 100, Max: 100)
+
+Example Request:
+GET /.netlify/functions/warpcast-api?allChannels=true&limit=50
+
+Response:
+{
+  "channels": [
+    {
+      "id": "memes",
+      "name": "memes",
+      "description": "Channel description",
+      "imageUrl": "https://example.com/image.jpg",
+      "followerCount": 12345,
+      "castCount": 6789
+    },
+    // More channels...
+  ],
+  "count": 50,
+  "timestamp": "2023-03-15T12:34:56Z"
+}
+
+4. Comprehensive Feed
+-------------------
+Generate a curated feed of trending content from top Farcaster channels.
+
+Request:
+GET /.netlify/functions/warpcast-api?comprehensiveFeed=true&channelLimit={CHANNEL_LIMIT}&followerLimit={FOLLOWER_LIMIT}&castLimit={CAST_LIMIT}&totalCastLimit={TOTAL_CAST_LIMIT}
+
+Parameters:
+comprehensiveFeed (Required) - Set to 'true' to fetch comprehensive feed
+channelLimit (Optional) - Number of top channels to analyze (Default: 20, Max: 50)
+followerLimit (Optional) - Number of followers per channel to analyze (Default: 10, Max: 50)
+castLimit (Optional) - Number of casts per follower to fetch (Default: 5, Max: 20)
+totalCastLimit (Optional) - Total number of casts to return (Default: 100, Max: 500)
+
+Example Request:
+GET /.netlify/functions/warpcast-api?comprehensiveFeed=true&channelLimit=10&totalCastLimit=50
+
+Response:
+{
+  "meta": {
+    "channels": 10,
+    "uniqueFollowers": 87,
+    "totalCastsCollected": 435,
+    "timestamp": "2023-03-15T12:34:56Z"
+  },
+  "casts": [
+    {
+      "id": "0x1234...",
+      "author": {
+        "username": "user123",
+        "displayName": "User Name",
+        "profileImage": "https://example.com/profile.jpg",
+        "fid": 1234
+      },
+      "text": "This is the cast content",
+      "content": "This is the cast content",
+      "timestamp": 1678889696,
+      "engagement": {
+        "likes": 123,
+        "recasts": 45,
+        "replies": 67,
+        "total": 235
+      },
+      "embeds": []
+    },
+    // More casts...
+  ]
+}
+
+Rate Limits and Constraints
+--------------------------
+- The API is subject to Warpcast's underlying rate limits
+- Maximum channels per request: 100
+- Maximum followers per channel: 50
+- Maximum casts per follower: 20
+- Maximum total casts in comprehensive feed: 500
+- Requests that exceed these limits will be automatically capped
+
+Error Responses
+--------------
+The API returns standard HTTP status codes:
+- 200: Success
+- 400: Bad request (missing required parameters)
+- 404: Resource not found
+- 429: Too many requests (rate limited)
+- 500: Server error
+
+Error response format:
+{
+  "error": "Error description",
+  "message": "Detailed error message"
+}
+
+Data Freshness
+-------------
+The API fetches data directly from Warpcast in real-time. There is no caching layer, so all data is current as of the time of the request.
+
+Example Usage
+------------
+
+cURL:
+curl "https://warpley.netlify.app/.netlify/functions/warpcast-api?comprehensiveFeed=true&channelLimit=5&totalCastLimit=10"
+
+JavaScript:
+async function getFarcasterTrends(limit = 5) {
+  const response = await fetch('https://warpley.netlify.app/.netlify/functions/warpcast-api?comprehensiveFeed=true&totalCastLimit=' + limit);
+  const data = await response.json();
+  
+  if (data.casts && data.casts.length > 0) {
+    return data.casts.map(cast => ({
+      author: `@${cast.author.username}`,
+      content: cast.text || cast.content,
+      engagement: cast.engagement.total
+    }));
+  } else {
+    return "No trending content found at the moment.";
+  }
+}
+
+Notes
+-----
+- The Warpcast API is subject to change. If you encounter issues, check for updates to this documentation.
+- For high-volume applications, consider implementing your own caching layer.
+- The comprehensive feed algorithm prioritizes engagement metrics (likes + recasts) to surface trending content.
