@@ -120,7 +120,7 @@ exports.handler = async function(event, context) {
         profileImage: cast.author?.pfp?.url,
         fid: cast.author?.fid
       },
-      content: cast.text,
+      text: cast.text, 
       timestamp: cast.timestamp,
       engagement: {
         likes: cast.reactions?.count || 0,

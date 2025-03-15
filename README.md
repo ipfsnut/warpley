@@ -110,7 +110,7 @@ async function getFarcasterTrends(limit = 5) {
       // Format the trending casts for your chatbot
       return data.casts.map(cast => ({
         author: `@${cast.author.username}`,
-        content: cast.content,
+        content: cast.text,
         engagement: cast.engagement.total
       }));
     } else {
